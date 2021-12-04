@@ -1,52 +1,52 @@
-import re
 from functools import partial
-from aoc.utils import *
 from aoc.week1 import *
+from itertools import groupby
 
-def day3(lines):
-    lines = list(lines)
-    lines_t = transpose(lines)
-    gamma, epsilon = list(), list()
-    for bits in lines_t:
-        bit = next(iter(most_common(bits)))
-        gamma.append(bit)
-        epsilon.append('1' if bit == '0' else '0')
+def build_board(numbers: list) -> (int, dict):
+    return len(numbers), {int(value) : (r, c) for r, row in enumerate(numbers) for c, value in enumerate(row)}
 
-    gamma = "".join(gamma)
-    epsilon = "".join(epsilon)
-    print("Day 3 part 1: {}".format(int(gamma, 2) * int(epsilon, 2)))
+def marked_positions(values: dict, called: set) -> set:
+    return {pos for value, pos in values.items() if value in called}
 
-    sublines = list(lines)
-    index = 0
-    while len(sublines) > 1:
-        tp = transpose(sublines)
-        mc = most_common(tp[index])
-        bit = '1' if len(mc) > 1 else next(iter(mc))
-        # keep all lines that are the same at current index
-        sublines = list(filter(lambda line: line[index] == bit, sublines))
-        index += 1
+def unmarked_values(values: dict, called: set) -> set:
+    return {value for value, pos in values.items() if value not in called}
 
-    oxygen = int(str(sublines[0]), 2)
+def winning_values(values: dict, called: set, dim: int) -> set:
+    positions = marked_positions(values, called)
+    for row, group in groupby(sorted(r for r, c in positions)):
+        if len(list(group)) == dim:
+            return {value for value, (r, c) in values.items() if r == row}
+    for col, group in groupby(sorted(c for r, c in positions)):
+        if len(list(group)) == dim:
+            return {value for value, (r, c) in values.items() if c == col}
+    return set()
 
-    sublines = list(lines)
-    index = 0
-    while len(sublines) > 1:
-        tp = transpose(sublines)
-        mc = most_common(tp[index])
-        bit = '1' if len(mc) > 1 else next(iter(mc))
-        # keep all lines that differ at current index
-        sublines = list(filter(lambda line: line[index] != bit, sublines))
-        index += 1
+def score_board(values: dict, called: list, dim: int) -> tuple:
+    cs = set()
+    for nr in called:
+        cs.add(nr)
+        ws = winning_values(values, cs, dim)
+        if ws:
+            when = len(cs)
+            score = sum(unmarked_values(values, cs)) * nr
+            return when, score
 
-    co2 = int(str(sublines[0]), 2)
-
-    print("Day 3 part 2 : {}".format(co2 * oxygen))
+    raise AssertionError("board is never complete")
 
 def day4(lines):
-    lines = list(lines)
+    first = next(lines)
+    drawn = [int(nr) for nr in first.split(",")]
+    lines = (line.split() for line in lines)
+    next(lines) # skip empty line
+    scores = list()
+    for k, group in groupby(lines, len):
+        if k > 0:
+            dim, board = build_board(list(group))
+            scores.append(score_board(board, drawn, dim))
 
-    print("Day 4 part 1 : {}".format(42))
-    print("Day 4 part 2 : {}".format(24))
+    scores = list(sorted(scores))
+    print("Day 5 part 1: {}".format(scores[0][1]))
+    print("Day 5 part 2: {}".format(scores[-1][1]))
 
 if __name__ == '__main__':
     d = {
@@ -63,6 +63,6 @@ if __name__ == '__main__':
 
         for fun in funs:
             with open("input/day{}.txt".format(num)) as file:
-                lines = filter(None, (line.strip() for line in file.readlines()))
+                lines = (line.strip() for line in file.readlines())
                 fun(lines)
 
