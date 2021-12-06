@@ -2,52 +2,7 @@ import re
 from functools import partial
 from aoc.week1 import *
 from itertools import groupby, chain
-
-def build_board(numbers: list) -> (int, dict):
-    return len(numbers), {int(value) : (r, c) for r, row in enumerate(numbers) for c, value in enumerate(row)}
-
-def marked_positions(values: dict, called: set) -> set:
-    return {pos for value, pos in values.items() if value in called}
-
-def unmarked_values(values: dict, called: set) -> set:
-    return {value for value, pos in values.items() if value not in called}
-
-def winning_values(values: dict, called: set, dim: int) -> set:
-    positions = marked_positions(values, called)
-    for row, group in groupby(sorted(r for r, c in positions)):
-        if len(list(group)) == dim:
-            return {value for value, (r, c) in values.items() if r == row}
-    for col, group in groupby(sorted(c for r, c in positions)):
-        if len(list(group)) == dim:
-            return {value for value, (r, c) in values.items() if c == col}
-    return set()
-
-def score_board(values: dict, called: list, dim: int) -> tuple:
-    cs = set()
-    for nr in called:
-        cs.add(nr)
-        ws = winning_values(values, cs, dim)
-        if ws:
-            when = len(cs)
-            score = sum(unmarked_values(values, cs)) * nr
-            return when, score
-
-    raise AssertionError("board is never complete")
-
-def day4(lines):
-    first = next(lines)
-    drawn = [int(nr) for nr in first.split(",")]
-    lines = (line.split() for line in lines)
-    next(lines) # skip empty line
-    scores = list()
-    for k, group in groupby(lines, len):
-        if k > 0:
-            dim, board = build_board(list(group))
-            scores.append(score_board(board, drawn, dim))
-
-    scores = list(sorted(scores))
-    print("Day 4 part 1: {}".format(scores[0][1]))
-    print("Day 4 part 2: {}".format(scores[-1][1]))
+from collections import Counter
 
 def is_diagonal(x1, y1, x2, y2):
     return x1 != x2 and y1 != y2
@@ -67,16 +22,31 @@ def day5(lines):
     all_lines = [(int(m.group(1)), int(m.group(2)), int(m.group(3)), int(m.group(4))) for m in matches]
     straight_lines = list(filter(lambda tuple: not is_diagonal(*tuple), all_lines))
 
-    points_on_straight_lines = sorted(list(chain.from_iterable(points(*xs) for xs in straight_lines)))
-    overlaps_straight_lines = (len(list(g)) for point, g in groupby(points_on_straight_lines))
-
-    points_on_all_lines = sorted(list(chain.from_iterable(points(*xs) for xs in all_lines)))
-    overlap_all_lines = (len(list(g)) for point, g in groupby(points_on_all_lines))
+    overlaps_straight_lines = Counter(chain.from_iterable(points(*xs) for xs in straight_lines)).values()
+    overlap_all_lines = Counter(chain.from_iterable(points(*xs) for xs in all_lines)).values()
 
     at_least_two = lambda x : x > 1
 
     print("Day 5 part 1: {}".format(sum(1 for x in filter(at_least_two, overlaps_straight_lines))))
     print("Day 5 part 2: {}".format(sum(1 for x in filter(at_least_two, overlap_all_lines))))
+
+def fish(counts: Counter, days: int) -> int:
+    for _ in range(days):
+        next_day = Counter()
+        for remaining, count in counts.items():
+            if remaining == 0:
+                next_day[8] += count
+                next_day[6] += count
+            else:
+                next_day[remaining - 1] += count
+        counts = next_day
+    return sum(counts.values())
+
+def day6(lines):
+    counts = Counter(int(nr) for nr in next(lines).split(","))
+    print("Day 6 part 1: {}".format(fish(counts, 80)))
+    print("Day 6 part 2: {}".format(fish(counts, 256)))
+
 
 if __name__ == '__main__':
     d = {
@@ -84,7 +54,8 @@ if __name__ == '__main__':
         2: [day2p1, day2p2],
         3: day3,
         4: day4,
-        5: day5}
+        5: day5,
+        6: day6}
 
     for num, funs in d.items():
         try:
