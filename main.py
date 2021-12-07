@@ -1,3 +1,4 @@
+import operator
 import re
 from functools import partial
 from aoc.week1 import *
@@ -47,6 +48,16 @@ def day6(lines):
     print("Day 6 part 1: {}".format(fish(counts, 80)))
     print("Day 6 part 2: {}".format(fish(counts, 256)))
 
+def day7(lines):
+    poss = [int(nr) for nr in next(lines).split(",")]
+    print("Day 7 part 1: {}".format(min(sum(abs(p1 - p2) for p1 in poss) for p2 in poss)))
+
+    triangle = lambda n: n * (n + 1) // 2
+    cost_fun = lambda x, y: triangle(abs(x - y))
+    total_costs = lambda pos : sum(cost_fun(pos, p1) for p1 in poss)
+
+    print("Day 7 part 2: {}".format(min(total_costs(pos) for pos in range(min(poss), max(poss) + 1))))
+
 
 if __name__ == '__main__':
     d = {
@@ -55,7 +66,8 @@ if __name__ == '__main__':
         3: day3,
         4: day4,
         5: day5,
-        6: day6}
+        6: day6,
+        7: day7}
 
     for num, funs in d.items():
         try:
