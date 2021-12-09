@@ -54,33 +54,24 @@ def day8(lines):
 
 def day9(lines):
     def adjacent(x, y):
-        yield x + 1, y
-        yield x - 1, y
-        yield x, y + 1
-        yield x, y - 1
+        return (x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)
 
     map = {(int(row), int(col)): int(value) for row, values in enumerate(lines) for col, value in enumerate(values)}
-    heights = (height for (x, y), height in map.items() if all(map.get((ax, ay), 10) > height for ax, ay in adjacent(x, y)))
-    risk = sum(h + 1 for h in heights)
+    risk = sum(height + 1 for (x, y), height in map.items() if all(map.get((ax, ay), 10) > height for ax, ay in adjacent(x, y)))
+    print("Day 9 part 1: {}".format(risk))
 
     basins = {(row, col) for (row, col), height in map.items() if height < 9}
 
-    def flood_fill(basin, x, y):
-        basin.add( (x, y) )
+    def basin_size(x, y):
         basins.remove((x, y))
-        for x2, y2 in adjacent(x, y):
-            if (x2, y2) in basins:
-                flood_fill(basin, x2, y2)
+        return sum(basin_size(x2, y2) for x2, y2 in adjacent(x, y) if (x2, y2) in basins) + 1
 
     sizes = list()
     while basins:
         sx, sy = next(iter(basins))
-        basin = set()
-        flood_fill(basin, sx, sy)
-        sizes.append( len(basin) )
+        sizes.append(basin_size(sx, sy))
 
-    print("Day 9 part 1: {}".format(risk))
-    print("Day 9 part 8: {}".format(reduce(operator.mul, sorted(sizes)[-3:])))
+    print("Day 9 part 2: {}".format(reduce(operator.mul, sorted(sizes)[-3:])))
 
 
 if __name__ == '__main__':
