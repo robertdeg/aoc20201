@@ -6,55 +6,6 @@ from itertools import groupby, chain
 from collections import Counter
 from functools import reduce
 
-def fish(counts: Counter, days: int) -> int:
-    for _ in range(days):
-        next_day = Counter()
-        for remaining, count in counts.items():
-            if remaining == 0:
-                next_day[8] += count
-                next_day[6] += count
-            else:
-                next_day[remaining - 1] += count
-        counts = next_day
-    return sum(counts.values())
-
-def day6(lines):
-    counts = Counter(int(nr) for nr in next(lines).split(","))
-    print("Day 6 part 1: {}".format(fish(counts, 80)))
-    print("Day 6 part 2: {}".format(fish(counts, 256)))
-
-def cumsum(iterable, function = operator.add):
-    sum = next(iterable)
-    yield sum
-    for value in iterable:
-        sum = function(sum, value)
-        yield sum
-
-def day7(lines):
-    positions = sorted([int(nr) for nr in next(lines).split(",")])
-    n = len(positions)
-    s = sum(positions)
-    ss = sum(p * p for p in positions)
-    average_lo, average_hi = s // n, (s - 1) // n + 1
-    grouped = [(p, len(list(group))) for p, group in groupby(positions)]
-    values = list(value for value, _ in grouped)
-    counts = list(cumsum(count for _, count in grouped))
-    sums = list(cumsum(value * count for value, count in grouped))
-
-    objective = lambda value, count, sum: value * (2 * count - n) + s - 2 * sum
-    min_costs = min(objective(value, count, sum) for value, count, sum in zip(values, counts, sums))
-
-    print("Day 7 part 1: {}".format(min_costs))
-
-    objective = lambda value, count, sum: value * (value * n - 2 * s) + value * (2 * count - n) + s - 2 * sum
-    min_costs = min(objective(value, count, sum) for value, count, sum in zip(values, counts, sums))
-    sum_at_avg =  sum(p for p in positions if p <= s / n)
-    count__at_avg = sum(1 for p in positions if p <= s / n)
-    min_costs = min(min_costs,
-                 objective(average_lo, count__at_avg, sum_at_avg),
-                 objective(average_hi, count__at_avg, sum_at_avg))
-
-    print("Day 7 part 2: {}".format((ss + min_costs) // 2))
 
 def day8(lines):
     count = 0
@@ -65,7 +16,8 @@ def day8(lines):
         output = [p for p in parts[1].split()]
         count += sum(1 for digit in output if len(digit) in [2, 3, 4, 7])
 
-        lookup = {0x24: '1', 0x5d: '2', 0x6d: '3', 0x2e: '4', 0x6b: '5', 0x7b: '6', 0x25: '7', 0x7f: '8', 0x6f: '9', 0x77: '0'}
+        lookup = {0x24: '1', 0x5d: '2', 0x6d: '3', 0x2e: '4', 0x6b: '5', 0x7b: '6', 0x25: '7', 0x7f: '8', 0x6f: '9',
+                  0x77: '0'}
         grouped = {length: list(g) for length, g in groupby(sorted(patterns, key=len), len)}
         seven = grouped[3][0]
         eight = grouped[7][0]
@@ -100,11 +52,41 @@ def day8(lines):
     print("Day 8 part 8: {}".format(total))
 
 
+def day9(lines):
+    def adjacent(x, y):
+        yield x + 1, y
+        yield x - 1, y
+        yield x, y + 1
+        yield x, y - 1
+
+    map = {(int(row), int(col)): int(value) for row, values in enumerate(lines) for col, value in enumerate(values)}
+    heights = (height for (x, y), height in map.items() if all(map.get((ax, ay), 10) > height for ax, ay in adjacent(x, y)))
+    risk = sum(h + 1 for h in heights)
+
+    basins = {(row, col) for (row, col), height in map.items() if height < 9}
+
+    def flood_fill(basin, x, y):
+        basin.add( (x, y) )
+        basins.remove((x, y))
+        for x2, y2 in adjacent(x, y):
+            if (x2, y2) in basins:
+                flood_fill(basin, x2, y2)
+
+    sizes = list()
+    while basins:
+        sx, sy = next(iter(basins))
+        basin = set()
+        flood_fill(basin, sx, sy)
+        sizes.append( len(basin) )
+
+    print("Day 9 part 1: {}".format(risk))
+    print("Day 9 part 8: {}".format(reduce(operator.mul, sorted(sizes)[-3:])))
+
+
 if __name__ == '__main__':
     d = {
-        1: [partial(day1, 1), partial(day1, 3)], 2: [day2p1, day2p2], 3: day3, 4: day4, 5: day5, 6: day6,
-        7: day7,
-        8: day8}
+        1: [partial(day1, 1), partial(day1, 3)], 2: [day2p1, day2p2], 3: day3, 4: day4, 5: day5, 6: day6, 7: day7,
+        8: day8, 9: day9}
 
     for num, funs in d.items():
         try:
@@ -116,4 +98,3 @@ if __name__ == '__main__':
             with open("input/day{}.txt".format(num)) as file:
                 lines = (line.strip() for line in file.readlines())
                 fun(lines)
-

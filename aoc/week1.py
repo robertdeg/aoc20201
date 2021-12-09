@@ -2,7 +2,7 @@ import re
 from collections import Counter
 from aoc.utils import *
 from itertools import groupby, chain
-
+import operator
 
 def day1(n: int, lines):
     values = [int(line) for line in lines]
@@ -161,4 +161,54 @@ def day5(lines):
 
     print("Day 5 part 1: {}".format(sum(1 for x in filter(at_least_two, overlaps_straight_lines))))
     print("Day 5 part 2: {}".format(sum(1 for x in filter(at_least_two, overlap_all_lines))))
+
+def fish(counts: Counter, days: int) -> int:
+    for _ in range(days):
+        next_day = Counter()
+        for remaining, count in counts.items():
+            if remaining == 0:
+                next_day[8] += count
+                next_day[6] += count
+            else:
+                next_day[remaining - 1] += count
+        counts = next_day
+    return sum(counts.values())
+
+def day6(lines):
+    counts = Counter(int(nr) for nr in next(lines).split(","))
+    print("Day 6 part 1: {}".format(fish(counts, 80)))
+    print("Day 6 part 2: {}".format(fish(counts, 256)))
+
+def cumsum(iterable, function = operator.add):
+    sum = next(iterable)
+    yield sum
+    for value in iterable:
+        sum = function(sum, value)
+        yield sum
+
+def day7(lines):
+    positions = sorted([int(nr) for nr in next(lines).split(",")])
+    n = len(positions)
+    s = sum(positions)
+    ss = sum(p * p for p in positions)
+    average_lo, average_hi = s // n, (s - 1) // n + 1
+    grouped = [(p, len(list(group))) for p, group in groupby(positions)]
+    values = list(value for value, _ in grouped)
+    counts = list(cumsum(count for _, count in grouped))
+    sums = list(cumsum(value * count for value, count in grouped))
+
+    objective = lambda value, count, sum: value * (2 * count - n) + s - 2 * sum
+    min_costs = min(objective(value, count, sum) for value, count, sum in zip(values, counts, sums))
+
+    print("Day 7 part 1: {}".format(min_costs))
+
+    objective = lambda value, count, sum: value * (value * n - 2 * s) + value * (2 * count - n) + s - 2 * sum
+    min_costs = min(objective(value, count, sum) for value, count, sum in zip(values, counts, sums))
+    sum_at_avg =  sum(p for p in positions if p <= s / n)
+    count__at_avg = sum(1 for p in positions if p <= s / n)
+    min_costs = min(min_costs,
+                 objective(average_lo, count__at_avg, sum_at_avg),
+                 objective(average_hi, count__at_avg, sum_at_avg))
+
+    print("Day 7 part 2: {}".format((ss + min_costs) // 2))
 
