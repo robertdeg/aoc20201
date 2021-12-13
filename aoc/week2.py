@@ -1,7 +1,7 @@
 import re
 from collections import Counter
 from aoc.utils import *
-from itertools import groupby, chain
+from itertools import groupby, chain, dropwhile
 import operator
 from functools import reduce
 
@@ -69,4 +69,24 @@ def day9(lines):
         sizes.append(basin_size(sx, sy))
 
     print("Day 9 part 2: {}".format(reduce(operator.mul, sorted(sizes)[-3:])))
+
+def day10(lines):
+    map = {'(': 1, '[': 2, '{': 3, '<': 4, ')': -1, ']': -2, '}': -3, '>': -4}
+    score = {'(': 1, '[': 2, '{': 3, '<': 4, ')': 3, ']': 57, '}': 1197, '>': 25137}
+
+    canceller = lambda seq, e: seq[:-1] if map[e] < 0 and map[seq[-1]] + map[e] == 0 else seq + [e]
+
+    part1, part2 = 0, list()
+
+    for line in lines:
+        reduced = list(reduce(canceller, line[1:], list(line[:1])))
+        bad_closing = next(dropwhile(lambda x: map[x] > 0, reduced), None)
+        if bad_closing is not None:
+            part1 += score[bad_closing]
+        else:
+            part2.append(reduce(lambda s, c: s * 5 + c, (map[c] for c in reversed(reduced)), 0))
+
+    part2 = sorted(part2)
+    print("Day 10 part 1: {}".format(part1))
+    print("Day 10 part 2: {}".format(part2[len(part2) // 2]))
 
