@@ -90,3 +90,62 @@ def day10(lines):
     print("Day 10 part 1: {}".format(part1))
     print("Day 10 part 2: {}".format(part2[len(part2) // 2]))
 
+def day11(lines):
+    map = {(int(row), int(col)): int(value) for row, values in enumerate(lines) for col, value in enumerate(values)}
+    def adjacent(x, y):
+        return (x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1), (x-1,y-1), (x+1,y+1), (x-1,y+1), (x+1,y-1)
+
+    def step(values: dict, flashes: int) -> (dict, int):
+        result = dict()
+        for pos in values:
+            result[pos] = values[pos] + 1
+
+        n = 1
+        while n > 0:
+            n = 0
+            for pos, value in result.items():
+                if value > 9:
+                    n += 1
+                    result[pos] = -1
+                    for nbor in adjacent(*pos):
+                        if result.get(nbor, -1) > -1:
+                            result[nbor] += 1
+
+            flashes += n
+
+        for pos, value in result.items(): result[pos] = 0 if value < 0 else value
+
+        return result, flashes
+
+    flashes = 0
+    steps = 0
+    for _ in range(1000):
+        map, flashes = step(map, flashes)
+        if len({v for v in map.values()}) == 1:
+            break
+
+        steps += 1
+
+    print("Day 11 part 1: {}".format(flashes))
+    print("Day 11 part 2: {}".format(steps + 1))
+
+def day12(lines):
+    edges = list(line.split("-") for line in lines)
+    outgoing = {src : list(map(operator.itemgetter(1), g)) for src, g in groupby(sorted(edges, key = operator.itemgetter(0)), key = operator.itemgetter(0))}
+    incoming = {src : list(map(operator.itemgetter(0), g)) for src, g in groupby(sorted(edges, key = operator.itemgetter(1)), key = operator.itemgetter(1))}
+
+    def num_paths(v: str, visited: dict, lim: int = 0) -> int:
+        if v == "end": return 1
+        n = 0
+        visited = dict(visited)
+        if v.islower(): visited[v] = visited.get(v, 0) + 1
+        for w in chain(iter(incoming.get(v, [])), iter(outgoing.get(v, []))):
+            if w.isupper():
+                n += num_paths(w, visited, lim)
+            elif w not in visited or w not in ("start", "end") and sum(1 for _, k in visited.items() if k > 1) < lim:
+                n += num_paths(w, visited, lim)
+        return n
+
+    print("Day 12 part 1: {}".format(num_paths("start", dict())))
+    print("Day 12 part 2: {}".format(num_paths("start", dict(), 1)))
+

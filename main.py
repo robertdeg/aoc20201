@@ -35,7 +35,7 @@ def day13(lines):
 if __name__ == '__main__':
     d = {
         1: [partial(day1, 1), partial(day1, 3)], 2: [day2p1, day2p2], 3: day3, 4: day4, 5: day5, 6: day6, 7: day7,
-        8: day8, 9: day9, 10: day10, 13: day13}
+        8: day8, 9: day9, 10: day10, 11: day11, 12: day12, 13: day13}
 
     for num, funs in d.items():
         try:
