@@ -51,7 +51,7 @@ def day14(lines):
 
         return result
 
-    def ccounts(pairs: Counter) -> Counter:
+    def score(pairs: Counter) -> Counter:
         charcounts = Counter({template[0]: -1, template[-1]: -1})
         for (a, b), count in pairs.items():
             charcounts[a] += count
@@ -65,12 +65,12 @@ def day14(lines):
     for _ in range(10):
         pairs = step(pairs)
 
-    print("Day 14 part 1: {}".format(ccounts(pairs)))
+    print("Day 14 part 1: {}".format(score(pairs)))
 
     for _ in range(30):
         pairs = step(pairs)
 
-    print("Day 14 part 2: {}".format(ccounts(pairs)))
+    print("Day 14 part 2: {}".format(score(pairs)))
 
 if __name__ == '__main__':
     d = {
