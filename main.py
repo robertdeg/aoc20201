@@ -32,10 +32,51 @@ def day13(lines):
             print("{}".format("#" if (x, y) in coordinates else " "), end="")
         print()
 
+def day14(lines):
+    template = next(lines)
+    next(lines)
+    instructions = (re.match(r"([A-Z][A-Z]) -> ([A-Z])", line).groups() for line in lines)
+    rules = {pair : insert for pair, insert in instructions}
+    pairs = Counter(a + b for a, b in zip(template, template[1:]))
+
+    def step(counts: Counter) -> Counter:
+        result = Counter()
+        for pair, count in counts.items():
+            insert = rules.get(pair, None)
+            if insert:
+                result[pair[0] + insert] += count
+                result[insert + pair[1]] += count
+            else:
+                result[pair] += count
+
+        return result
+
+    def ccounts(pairs: Counter) -> Counter:
+        charcounts = Counter({template[0]: -1, template[-1]: -1})
+        for (a, b), count in pairs.items():
+            charcounts[a] += count
+            charcounts[b] += count
+
+        charcounts = Counter({c: n // 2 for c, n in charcounts.items()}) + Counter({template[0]: 1, template[-1]: 1})
+        min_count = min(charcounts.values())
+        max_count = max(charcounts.values())
+        return max_count - min_count
+
+    for _ in range(10):
+        pairs = step(pairs)
+
+    print("Day 14 part 1: {}".format(ccounts(pairs)))
+
+    for _ in range(30):
+        pairs = step(pairs)
+
+    print("Day 14 part 2: {}".format(ccounts(pairs)))
+
 if __name__ == '__main__':
     d = {
         1: [partial(day1, 1), partial(day1, 3)], 2: [day2p1, day2p2], 3: day3, 4: day4, 5: day5, 6: day6, 7: day7,
-        8: day8, 9: day9, 10: day10, 11: day11, 12: day12, 13: day13}
+        8: day8, 9: day9, 10: day10, 11: day11, 12: day12, 13: day13,
+        14: day14}
 
     for num, funs in d.items():
         try:
