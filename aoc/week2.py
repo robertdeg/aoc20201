@@ -1,6 +1,5 @@
 import re
 from collections import Counter
-from aoc.utils import *
 from itertools import groupby, chain, dropwhile
 import operator
 from functools import reduce
