@@ -358,4 +358,4 @@ def day21(lines):
         win1, win2 = reduce(add, (mul(counts[delta], wins((p2, advance(p1, delta)), (s2, s1 + advance(p1, delta)))) for delta in range(3, 10)))
         return win2, win1
 
-    print("Day 21 part 2: {}".format(wins((int(start1), int(start2)), (0, 0))))
+    print("Day 21 part 2: {}".format(max(wins((int(start1), int(start2)), (0, 0)))))
